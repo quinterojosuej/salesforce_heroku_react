@@ -42,7 +42,7 @@ const App: () => Node = () => { // root
   const [beat, setBeat] = useState('');
 
   return (
-    <UserContext.Provider value={[username, setUsername], [currentFlash, setCurrentFlash], [beat, setBeat]}>
+    <UserContext.Provider value={{ Username: [username, setUsername], Flash: [currentFlash, setCurrentFlash], Beat: [beat, setBeat]}}>
         <RootSiblingParent>
 
             <NavigationContainer>
@@ -88,7 +88,8 @@ const App: () => Node = () => { // root
 
 const InitialScreen = ({ navigation }) => { // User will log in here
   
-  const [username, setUsername] = useContext(UserContext);
+  const {Username, } = useContext(UserContext);
+  const [username, setUsername] = Username;
   const [password, setPassword] = useState('');
 
   const checkUser = async() => {
@@ -176,14 +177,16 @@ const CreationScreen = ({navigation, route }) => {
 
 const StudyScreen = ({ navigation, route }) => {
 
-  const [username, ] = useContext(UserContext);
+  const {Username, Flash, Beat} = useContext(UserContext);
 
-  const [currentFlash, setCurrentFlash] = useContext(UserContext); // did work
+  const [username, ] = Username;
+
+  const [currentFlash, setCurrentFlash] = Flash;
 
   const [showBool, setShowBool] = useState(false);
   const [data, setData] = useState([]);
 
-  const [beat, setBeat] = useState('');
+  const [beat, setBeat] = Beat;
 
   const getFlashcards = async() => {
     try {
@@ -273,14 +276,33 @@ const StudyScreen = ({ navigation, route }) => {
 
 const ActualStudyScreen = ({ navigation, route }) => {
 
-  const [username, ] = useContext(UserContext);
-  const [currentFlash, setCurrentFlash] = useContext(UserContext);
-  const [beat, setBeat] = useContext(UserContext);
+  const {Username, Flash, Beat} = useContext(UserContext)
+
+  const [username, ] = Username;
+  const [currentFlash, setCurrentFlash] = Flash;
+  const [beat, setBeat] = Beat;
+
+  useEffect(() => {
+
+  }, []); // if something needs to load on change, use this
+    
+  const beatSwitch = (param) => { // This will set the thing
+    switch(param) {
+      case '1':
+        return <Text> TEST</Text>;
+      default:
+        return <Text>TESTED </Text>;
+    }
+  }
 
   return (
     <SafeAreaView>
       <View>
-        <Text> inputted values: { username } { currentFlash }</Text>
+        <Text> inputted values: { username } { currentFlash } { beat }</Text>
+      </View>
+
+      <View>
+        { beatSwitch(beat) }
       </View>
 
     </SafeAreaView>
