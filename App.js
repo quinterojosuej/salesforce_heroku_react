@@ -282,18 +282,71 @@ const ActualStudyScreen = ({ navigation, route }) => {
   const [currentFlash, setCurrentFlash] = Flash;
   const [beat, setBeat] = Beat;
 
+  const [initial, setInitial] = useState(true);
+
+  const [data, setData] = useState([]);
+  const [answered, setAnswered] = useState(true);
+
   useEffect(() => {
 
-  }, []); // if something needs to load on change, use this
+    if(initial) {
+      let res1 = currentFlash.split(/\r?\n/); // probably wrong here
+      
+      setCurrentFlash(
+        res1.map(val => {
+          return val.split(',');
+      })
+      );
+      setInitial(false);
+    } else {
+
+      setData(currentFlash.shift()); // maybe work?
+    }
+    
+  }, [answered]); // if something needs to load on change, use this
     
   const beatSwitch = (param) => { // This will set the thing
     switch(param) {
       case '1':
         return <Text> TEST</Text>;
       default:
-        return <Text>TESTED </Text>;
+        return (
+          // <View>
+          //   <View  style={ styles.flexHorizontal }>
+          //     <Text>TESTED </Text>
+          //     <View nativeID="jj" style={ styles.circle } />
+          //     <View style={ styles.circle } />
+          //   </View>
+          //   <View>
+          //     <Text> { currentFlash } </Text>
+          //   </View>
+          // </View>
+          <View>
+            <View>
+              <Button title="push me!" onPress={() => setAnswered(!answered)} />
+            </View>
+          </View>
+        );
     }
-  }
+  };
+
+  const questionSwitch = () => { // logic for changing bool
+    return (
+      <View>
+        <Text>question</Text>
+        <Text> { data[0] } </Text>
+      </View>
+    )
+  };
+
+  const choiceSwitch = () => { // logic for changing bool
+    return (
+      <View>
+        <Text>choices</Text>
+        <Text> { data[1] } </Text>
+      </View>
+    )
+  };
 
   return (
     <SafeAreaView>
@@ -302,7 +355,19 @@ const ActualStudyScreen = ({ navigation, route }) => {
       </View>
 
       <View>
-        { beatSwitch(beat) }
+        <View>
+          <Text>Question: </Text>
+          { questionSwitch() }
+        </View>
+
+        <View>
+          { beatSwitch(beat) }
+        </View>
+
+        <View>
+          <Text>Choices: </Text>
+          { choiceSwitch() }
+        </View>
       </View>
 
     </SafeAreaView>
@@ -327,7 +392,18 @@ const styles = StyleSheet.create({
   basicView: {
     margin: 2, 
     borderWidth: 5
-  }
+  },
+  flexHorizontal: {
+    flex:1,
+    flexWrap: 'wrap',
+    flexDirection: 'row'
+  },
+  circle: {
+    width: 50,
+    height: 50,
+    borderRadius: 100 / 2,
+    backgroundColor: "turquoise",
+  },
 });
 
 export default App;
