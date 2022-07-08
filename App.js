@@ -285,22 +285,28 @@ const ActualStudyScreen = ({ navigation, route }) => {
   const [initial, setInitial] = useState(true);
 
   const [data, setData] = useState([]);
+  const [copy, setCopy] = useState([]);
   const [answered, setAnswered] = useState(true);
 
   useEffect(() => {
 
-    if(initial) {
-      let res1 = currentFlash.split(/\r?\n/); // probably wrong here
+    if(initial) { // split the string here 
+      let res1 = currentFlash.split(/\r?\n/);
       
-      setCurrentFlash(
+      setCopy(
         res1.map(val => {
           return val.split(',');
       })
       );
       setInitial(false);
-    } else {
-
-      setData(currentFlash.shift()); // maybe work?
+    } else { // update the data here
+      try{
+      setData(copy.shift()); // maybe work?
+      console.log('still works, at:', data);
+      }
+      catch(e){
+        console.log(e);
+      }
     }
     
   }, [answered]); // if something needs to load on change, use this
@@ -330,23 +336,22 @@ const ActualStudyScreen = ({ navigation, route }) => {
     }
   };
 
-  const questionSwitch = () => { // logic for changing bool
-    return (
-      <View>
-        <Text>question</Text>
-        <Text> { data[0] } </Text>
-      </View>
-    )
-  };
 
-  const choiceSwitch = () => { // logic for changing bool
-    return (
-      <View>
-        <Text>choices</Text>
-        <Text> { data[1] } </Text>
-      </View>
-    )
-  };
+  const valueMaker = () => {
+    return data.map(elementMaker);
+  }
+
+  const elementMaker = (item, index) => {
+    if(index == 0){
+      return (<Text>Question: { item } </Text>);
+    }
+    else if(index == 1) {
+      return (<Button title={ item } onPress={ () => console.log('correct')}/>);
+    }
+    else{
+      return (<Button title={ item } onPress={() => console.log('incorrect')} />);
+    }
+  }
 
   return (
     <SafeAreaView>
@@ -356,17 +361,11 @@ const ActualStudyScreen = ({ navigation, route }) => {
 
       <View>
         <View>
-          <Text>Question: </Text>
-          { questionSwitch() }
-        </View>
-
-        <View>
           { beatSwitch(beat) }
         </View>
 
         <View>
-          <Text>Choices: </Text>
-          { choiceSwitch() }
+          { valueMaker() }
         </View>
       </View>
 
