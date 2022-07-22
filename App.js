@@ -25,6 +25,8 @@ import {
   FlatList,
   ActivityIndicator,
   Text,
+  ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 
 // const axios = require('axios'); // need to npm purge/remove
@@ -165,11 +167,145 @@ const HomeScreen = ({ navigation, route }) => {
 
 const CreationScreen = ({navigation, route }) => {
 
+  const { Username } = useContext(UserContext);
+  const [username, ] = Username;
+
+  const [title, setTitle] = useState('');
+
+  const [question, setQuestion] = useState(''); // these 3 make up the content
+  const [answer, setAnswer] = useState('');
+  const [content, setContent] = useState('');
+
+  const [totalContent, setTotalContent] = useState([]);
+
+  const [changedTotals, setChangedTotals] = useState(true);
+
+  useEffect(() => {
+    console.log('inside the creationScreen useEffect');
+    
+    // if(totalContent) { //probs wrong here lol
+
+    // }
+    
+  }, [changedTotals]); // if something needs to load on change, use this
+
+
+  const insertFlash = async() => {
+    // console.log("HERE");
+    try {
+      const call = await fetch(URL + '/insertFlash', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          'userName': username,
+          'content': combineContentToString(),
+          'title': title,
+        })
+      });
+
+      let callJSON = await call.json();
+      console.log('res', callJSON[0]);
+      Toast.show({
+        type: 'success',
+        text1: 'Successfully made flashcards ' + title,
+      });
+
+      setQuestion('');
+      setAnswer('');
+      setContent('');
+      setTitle('');
+
+    } catch(error) {
+      console.log('error', error);
+
+      Toast.show({
+        type: 'error',
+        text1: 'Request failed, please try again',
+      });
+
+    } finally {
+      console.log('completed request');
+    }
+  };
+
+  const combineContentToString = () => {
+    let stringList = totalContent.map((val, ind) => {
+      return val.question + ',' + val.answer + ',' + val.other;
+    });
+
+    return stringList.join(',');
+  }
+
+  const populateContent = () => {
+    setTotalContent(
+      [...totalContent, {'question':question, 'answer': answer, 'other': content}]
+    );
+
+    setQuestion('');
+    setAnswer('');
+    setContent('');
+    console.log('totalContent updated: ', totalContent);
+  };
+
+  const scrollValues = () => {
+    return ( // want the scrollview as horizontal, but no work?
+      <ScrollView horizontal > 
+        { totalContent.map(individualScrollValues) }
+      </ScrollView>
+    );
+  }
+
+  const individualScrollValues = (val, ind) => {
+    return (
+      <TouchableOpacity onPress={() => console.log("clicked the thing")}>
+        <Text> Question: { val.question } Answer:{ val.answer } Other:{ val.other } </Text>
+      </TouchableOpacity>
+    );
+  }
+
   return (
     <SafeAreaView>
       <View>
+      <TextInput
+        placeholder='title'
+        style={styles.inputNormal}
+        onChangeText={ setTitle }
+        value={ title }
+      />
 
-      </View>
+      <TextInput 
+        placeholder='question'
+        style={styles.inputNormal} 
+        onChangeText={ setQuestion }
+        value={ question }
+      />
+
+      <TextInput 
+        placeholder='answer'
+        style={styles.inputNormal}
+        onChangeText={ setAnswer }
+        value={ answer }
+      />
+
+      <TextInput
+        placeholder='other_option1, other_option2'
+        style={styles.inputNormal}
+        onChangeText={ setContent }
+        value={ content }
+      />
+    </View>
+
+    <View> 
+      { scrollValues() }
+    </View>
+
+    <View>
+      <Button title="Next" onPress={() => populateContent()}/>
+      <Button title="Done!" onPress={() => insertFlash()}/>
+      <Toast />
+    </View>
     </SafeAreaView>
   )
 
@@ -276,19 +412,22 @@ const StudyScreen = ({ navigation, route }) => {
 
 const ActualStudyScreen = ({ navigation, route }) => {
 
-  const {Username, Flash, Beat} = useContext(UserContext)
+  const {Username, Flash, Beat} = useContext(UserContext);
 
   const [username, ] = Username;
   const [currentFlash, setCurrentFlash] = Flash;
   const [beat, setBeat] = Beat;
 
   const [initial, setInitial] = useState(true);
+  const [complete, setComplete] = useState(true);
 
   const [data, setData] = useState([]);
   const [copy, setCopy] = useState([]);
   const [answered, setAnswered] = useState(true);
 
-  useEffect(() => {
+  const [total, setTotal] = useState([]);
+
+  useEffect(() => { 
 
     if(initial) { // split the string here 
       let res1 = currentFlash.split(/\r?\n/);
@@ -300,33 +439,24 @@ const ActualStudyScreen = ({ navigation, route }) => {
       );
       setInitial(false);
     } else { // update the data here
-      try{
-      setData(copy.shift()); // maybe work?
-      console.log('still works, at:', data);
+      try {
+        setData(copy.shift()); // did work
+        console.log('total :', total);
       }
-      catch(e){
+      catch(e) {
         console.log(e);
+        setComplete(false);
       }
     }
     
   }, [answered]); // if something needs to load on change, use this
-    
+
   const beatSwitch = (param) => { // This will set the thing
     switch(param) {
       case '1':
         return <Text> TEST</Text>;
       default:
         return (
-          // <View>
-          //   <View  style={ styles.flexHorizontal }>
-          //     <Text>TESTED </Text>
-          //     <View nativeID="jj" style={ styles.circle } />
-          //     <View style={ styles.circle } />
-          //   </View>
-          //   <View>
-          //     <Text> { currentFlash } </Text>
-          //   </View>
-          // </View>
           <View>
             <View>
               <Button title="push me!" onPress={() => setAnswered(!answered)} />
@@ -336,9 +466,47 @@ const ActualStudyScreen = ({ navigation, route }) => {
     }
   };
 
+  const validateAnswer = (boolean) => {
+    setTotal([...total, {'question':data[0], 'correct': data[1], 'pass': boolean}]);
+    setAnswered(!answered);
+  }
+
+  const endView = () => {
+    return (
+      <View>
+        <View>
+          <Text>totally done now: { total.length } </Text>
+        </View>
+
+        <View>
+        { total.map(endElementMaker) }
+
+        </View>
+
+      </View>
+    )
+  }
+
+  const endElementMaker = (item, index) => {
+    return (<View><Text> { index } { item.correct } { String(item.pass) }  </Text></View>)
+  }
 
   const valueMaker = () => {
-    return data.map(elementMaker);
+    try {
+      return(
+        <View>
+          <View>
+            { beatSwitch(beat) }
+          </View>
+          <View>
+            { data.map(elementMaker) }
+          </View>
+        </View>
+        );
+    } catch(e) {
+      console.log('expected F');
+      return endView();
+    }
   }
 
   const elementMaker = (item, index) => {
@@ -346,28 +514,22 @@ const ActualStudyScreen = ({ navigation, route }) => {
       return (<Text>Question: { item } </Text>);
     }
     else if(index == 1) {
-      return (<Button title={ item } onPress={ () => console.log('correct')}/>);
+      return (<Button title={ item } onPress={ () => validateAnswer(true) }/>);
     }
     else{
-      return (<Button title={ item } onPress={() => console.log('incorrect')} />);
+      return (<Button title={ item } onPress={() => validateAnswer(false) } />);
     }
   }
 
   return (
     <SafeAreaView>
-      <View>
+      {/* <View>
         <Text> inputted values: { username } { currentFlash } { beat }</Text>
-      </View>
-
-      <View>
-        <View>
-          { beatSwitch(beat) }
-        </View>
+      </View> */}
 
         <View>
           { valueMaker() }
         </View>
-      </View>
 
     </SafeAreaView>
   )
@@ -403,6 +565,14 @@ const styles = StyleSheet.create({
     borderRadius: 100 / 2,
     backgroundColor: "turquoise",
   },
+  scrollViewHorizontal: {
+    horizontal: true,
+    margin: 2
+  },
+  minViewHeight: {
+    minHeight: 20,
+    borderColor: 'black'
+  }
 });
 
 export default App;
