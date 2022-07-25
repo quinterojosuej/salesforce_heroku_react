@@ -259,11 +259,30 @@ const CreationScreen = ({navigation, route }) => {
 
   const individualScrollValues = (val, ind) => {
     return (
-      <TouchableOpacity onPress={() => console.log("clicked the thing")}>
+      <TouchableOpacity key={ new Date().toLocaleString() + val.question } style={ styles.minViewHeight} onPress={() => populateFromValues(ind)}>
         <Text> Question: { val.question } Answer:{ val.answer } Other:{ val.other } </Text>
       </TouchableOpacity>
     );
   }
+
+  const populateFromValues = (ind) => {
+    console.log('in the ind value:',totalContent[ind])
+    setQuestion(totalContent[ind].question);
+    setAnswer(totalContent[ind].answer);
+    setContent(totalContent[ind].other);
+
+    let localCopy = totalContent;
+
+    if(localCopy.length > 1){
+      localCopy.splice(ind, 1);
+      setTotalContent(localCopy);
+    }
+    else{
+      setTotalContent([]);
+    }
+        // setChangedTotals(!changedTotals);
+    console.log('in the populateFromValues', totalContent);
+  };
 
   return (
     <SafeAreaView>
@@ -570,7 +589,8 @@ const styles = StyleSheet.create({
     margin: 2
   },
   minViewHeight: {
-    minHeight: 20,
+    minHeight: 40,
+    maxWidth: 80,
     borderColor: 'black'
   }
 });
